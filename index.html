@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WardrobeOS — Sid</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="ambient one"></div>
+  <div class="ambient two"></div>
+  <main class="app">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Sid's MBA-HC Outfit Engine</p>
+        <h1>Where are we going, Sid?</h1>
+        <p class="sub">Pick the context. WardrobeOS ranks your best combinations from your real wardrobe.</p>
+      </div>
+      <div class="heroStats">
+        <span><b>18</b> Lowers</span>
+        <span><b>43</b> Uppers</span>
+        <span><b>5</b> Footwear</span>
+        <span><b>3</b> Ties</span>
+      </div>
+    </section>
+
+    <section class="modeGrid" id="modeGrid"></section>
+
+    <section class="questionPanel hidden" id="questionPanel"></section>
+
+    <section class="toolbar">
+      <div>
+        <p class="eyebrow" id="currentModeLabel">Lecture</p>
+        <h2 id="topTitle">Top 20 outfits</h2>
+      </div>
+      <div class="filterPills" id="filterPills"></div>
+    </section>
+
+    <section class="topGrid" id="topGrid"></section>
+
+    <section class="builder">
+      <div class="builderHeader">
+        <div>
+          <p class="eyebrow">Manual Outfit Builder</p>
+          <h2>Experiment with combinations</h2>
+        </div>
+        <div class="scoreBadge" id="manualScore">Score —</div>
+      </div>
+
+      <div class="selectorGrid" id="selectorGrid"></div>
+
+      <div class="manualPreview" id="manualPreview">
+        <p>Select items above to see colour harmony, occasion suitability and attractiveness score.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="wardrobeData.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
