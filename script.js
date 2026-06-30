@@ -1,6 +1,6 @@
 const modes = [
   {id:'lecture', icon:'🎓', title:'To a Lecture', desc:'Smart casual. No toe-showing shoes. Jeans + sneakers get preference.'},
-  {id:'auditorium', icon:'🏛️', title:'To the Auditorium', desc:'Suit mandatory. British cut preferred. Tie + black formal shoes.'},
+  {id:'auditorium', icon:'🏛️', title:'To the Auditorium', desc:'Suit mandatory. British cut preferred. White shirt first. Tie + black formal shoes.'},
   {id:'presentation', icon:'🎤', title:'To a Presentation', desc:'Asks whether suit is needed. Otherwise smart formal with jeans preferred.'},
   {id:'roam', icon:'🚶', title:'To Roam Around', desc:'Choose slightly formal or casual casual, then explore campus fits.'},
   {id:'party', icon:'🎉', title:'To a Party', desc:'Best looks mixing sharp, casual and bold pieces.'}
@@ -13,8 +13,17 @@ const $ = s => document.querySelector(s);
 const modeGrid = $('#modeGrid'), topGrid = $('#topGrid'), selectorGrid = $('#selectorGrid');
 
 function label(item){ return `${item.brand} – ${item.color} – ${item.type}`; }
+function roleEmoji(role){
+  const r = role.toLowerCase();
+  if(r.includes('lower')) return '👖';
+  if(r.includes('shirt') || r.includes('upper')) return '👕';
+  if(r.includes('footwear') || r.includes('shoe')) return '👟';
+  if(r.includes('suit')) return '🧥';
+  if(r.includes('tie')) return '👔';
+  return '●';
+}
 function chip(item, role){
-  return `<div class="itemLine"><span class="dot" style="background:${item.hex}"></span><div class="itemText"><b>${role}</b><span>${label(item)}</span></div></div>`;
+  return `<div class="itemLine"><span class="emojiIcon">${roleEmoji(role)}</span><span class="dot" title="${item.color}" style="background:${item.hex}"></span><div class="itemText"><b>${role}</b><span>${label(item)}</span></div></div>`;
 }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400); }
 function contrastScore(a,b){
@@ -72,22 +81,42 @@ function pairScore(l,u,f,mode){
   if(mode==='roamCasual'){ s += (l.casual||0)+(u.casual||0)+footwearScore(f,'roamCasual')+contrastScore(l,u); if(l.category==='shorts') s-=4; }
   return Math.max(0, Math.min(100, Math.round(s)));
 }
+function shirtSuitRank(shirt){
+  if(shirt.white) return 100;
+  if(shirt.color.includes('Mint') || shirt.color.includes('Sky') || shirt.color.includes('Light Grey')) return 72;
+  if(shirt.color.includes('Steel Grey') || shirt.color.includes('Dusty Purple')) return 58;
+  if(shirt.color.includes('Black') || shirt.color.includes('Jet Black')) return 25;
+  return 45;
+}
 function suitScore(suit, shirt, tie, shoes){
-  let s=64; s += suit.id==='SU-001'?16:10; s += shirt.white?12:shirt.solid?7:0; if(shirt.pattern) s-=10;
-  s += tie.id==='TI-002'?8:tie.id==='TI-001'?7:5; s += shoes.category==='formalShoes'?10:-30;
-  if(shirt.color.includes('White') && tie.id==='TI-002') s+=3; if(shirt.color.includes('Mint') && tie.id==='TI-002') s+=2;
+  let s=58;
+  s += suit.id==='SU-001'?22:12;
+  s += shirt.white?30:shirt.solid?6:0;
+  s += Math.round(shirtSuitRank(shirt) / 10);
+  if(shirt.pattern) s-=30;
+  if(shirt.color.includes('Black') || shirt.color.includes('Jet Black')) s-=28;
+  s += tie.id==='TI-002'?8:tie.id==='TI-001'?7:5;
+  s += shoes.category==='formalShoes'?10:-40;
+  if(shirt.color.includes('White') && tie.id==='TI-002') s+=5;
+  if(shirt.color.includes('Mint') && tie.id==='TI-002') s+=2;
   return Math.max(0, Math.min(100, Math.round(s)));
 }
 function activeModeKey(){ if(state.mode==='presentation') return state.presentationSuit?'auditorium':'presentationNoSuit'; if(state.mode==='roam') return state.roamVibe==='casualCasual'?'roamCasual':'roamFormal'; return state.mode; }
-function reasonFor(mode){ return ({lecture:'Lecture-safe: no exposed toes, smart upper, jeans/sneaker bias.',auditorium:'Mandapam-safe: suit, tie, solid formal shirt and black shoes.',presentationNoSuit:'Presentation-ready without suit: formal shirt priority, clean footwear, jeans preferred.',roamFormal:'Campus roaming with a polished edge: relaxed but still sharp.',roamCasual:'Casual casual: comfort first, but still colour-aware.',party:'Party mode: strongest silhouette, contrast and confidence.'})[mode]||''; }
+function reasonFor(mode){ return ({lecture:'Lecture-safe: no exposed toes, smart upper, jeans/sneaker bias.',auditorium:'Mandapam-safe: navy suit, white formal shirt priority, tie and black formal shoes. Black T-shirts and casual uppers are blocked here.',presentationNoSuit:'Presentation-ready without suit: formal shirt priority, clean footwear, jeans preferred.',roamFormal:'Campus roaming with a polished edge: relaxed but still sharp.',roamCasual:'Casual casual: comfort first, but still colour-aware.',party:'Party mode: strongest silhouette, contrast and confidence.'})[mode]||''; }
 function getById(arr,id){return arr.find(x=>x.id===id)}
 
 function generateTop(modeKey, limit=20){
   if(modeKey==='auditorium'){
-    const shirts=wardrobe.uppers.filter(u=>u.category==='formal' && (u.white || (u.solid && !u.pattern)));
-    const shoes=wardrobe.footwear.find(f=>f.category==='formalShoes'); let combos=[];
-    wardrobe.suits.forEach(suit=>shirts.forEach(shirt=>wardrobe.ties.forEach(tie=>combos.push({kind:'suit', suit, upper:shirt, tie, footwear:shoes, score:suitScore(suit,shirt,tie,shoes)}))));
-    return diversify(combos.sort((a,b)=>b.score-a.score),limit,'upper');
+    const shirts=wardrobe.uppers
+      .filter(u=>u.category==='formal' && u.solid && !u.pattern)
+      .sort((a,b)=>shirtSuitRank(b)-shirtSuitRank(a));
+    const shoes=wardrobe.footwear.find(f=>f.category==='formalShoes');
+    let combos=[];
+    wardrobe.suits.forEach(suit=>shirts.forEach(shirt=>wardrobe.ties.forEach(tie=>{
+      const score=suitScore(suit,shirt,tie,shoes);
+      if(score>=70) combos.push({kind:'suit', suit, upper:shirt, tie, footwear:shoes, score});
+    })));
+    return combos.sort((a,b)=>b.score-a.score).slice(0,limit);
   }
   const lowers=wardrobe.lowers.filter(l=>lowerEligible(l,modeKey));
   const uppers=wardrobe.uppers.filter(u=>upperEligible(u,modeKey));
@@ -101,13 +130,13 @@ function diversify(list,limit,key){
   return chosen.length>=limit ? chosen : list.slice(0,limit);
 }
 function comboText(o){
-  if(o.kind==='suit') return `${label(o.suit)}\n${label(o.upper)}\n${label(o.tie)}\n${label(o.footwear)}\nScore: ${o.score}/100`;
-  return `${label(o.lower)}\n${label(o.upper)}\n${label(o.footwear)}\nScore: ${o.score}/100`;
+  if(o.kind==='suit') return `${roleEmoji('Suit')} ${label(o.suit)}\n${roleEmoji('Shirt')} ${label(o.upper)}\n${roleEmoji('Tie')} ${label(o.tie)}\n${roleEmoji('Footwear')} ${label(o.footwear)}\nScore: ${o.score}/100`;
+  return `${roleEmoji('Lower')} ${label(o.lower)}\n${roleEmoji('Upper')} ${label(o.upper)}\n${roleEmoji('Footwear')} ${label(o.footwear)}\nScore: ${o.score}/100`;
 }
 function saveLook(o){ const saved=JSON.parse(localStorage.getItem('wardrobeos_saved')||'[]'); saved.unshift({...o, savedAt:new Date().toISOString()}); localStorage.setItem('wardrobeos_saved',JSON.stringify(saved.slice(0,24))); renderSaved(); toast('Look saved'); }
 function copyLook(o){ navigator.clipboard?.writeText(comboText(o)); toast('Copied outfit'); }
 function metricsFor(o,modeKey){
-  if(o.kind==='suit') return [['Formality',98],['Suitability',o.score],['Tie Match',o.tie.id==='TI-002'?98:92]];
+  if(o.kind==='suit') return [['Formality',98],['Suitability',o.score],['White Shirt Logic',o.upper.white?100:70]];
   return [['Harmony',70+contrastScore(o.lower,o.upper)*3],['Occasion',o.score],['Footwear',70+footwearScore(o.footwear,modeKey)*3]];
 }
 
@@ -144,11 +173,12 @@ function cardHTML(o,i,modeKey){
   const body=o.kind==='suit'?`${chip(o.suit,'Suit')}${chip(o.upper,'Shirt')}${chip(o.tie,'Tie')}${chip(o.footwear,'Footwear')}`:`${chip(o.lower,'Lower')}${chip(o.upper,'Upper')}${chip(o.footwear,'Footwear')}`;
   return `<article class="outfitCard"><div class="outfitTop"><div class="rank">#${i+1}</div><div class="score">${o.score}<small>score</small></div></div>${body}<div class="metrics">${metricHTML}</div><p class="reason">${reasonFor(modeKey)}</p><div class="cardActions"><button class="actionBtn" data-save="${i}">Save look</button><button class="actionBtn secondary" data-copy="${i}">Copy</button></div></article>`;
 }
-function optionHTML(items, placeholder){ return `<option value="">${placeholder}</option>` + items.map(i=>`<option value="${i.id}">● ${label(i)}</option>`).join(''); }
+function optionHTML(items, placeholder){ return `<option value="">${placeholder}</option>` + items.map(i=>`<option value="${i.id}">${roleEmoji(i.type)} ${label(i)}</option>`).join(''); }
 function renderBuilder(){
   const modeKey=activeModeKey();
   if(modeKey==='auditorium'){
-    selectorGrid.innerHTML=`<div class="selectWrap"><label>Suit</label><select id="manualSuit">${optionHTML(wardrobe.suits,'Select suit')}</select></div><div class="selectWrap"><label>Shirt</label><select id="manualUpper">${optionHTML(wardrobe.uppers.filter(u=>u.category==='formal' && (u.white || (u.solid && !u.pattern))),'Select shirt')}</select></div><div class="selectWrap"><label>Tie</label><select id="manualTie">${optionHTML(wardrobe.ties,'Select tie')}</select></div><div class="selectWrap"><label>Footwear</label><select id="manualFoot">${optionHTML(wardrobe.footwear.filter(f=>f.category==='formalShoes'),'Select footwear')}</select></div>`;
+    const suitShirts=wardrobe.uppers.filter(u=>u.category==='formal' && u.solid && !u.pattern).sort((a,b)=>shirtSuitRank(b)-shirtSuitRank(a));
+    selectorGrid.innerHTML=`<div class="selectWrap"><label>Suit</label><select id="manualSuit">${optionHTML(wardrobe.suits,'Select suit')}</select></div><div class="selectWrap"><label>Shirt</label><select id="manualUpper">${optionHTML(suitShirts,'Select shirt')}</select></div><div class="selectWrap"><label>Tie</label><select id="manualTie">${optionHTML(wardrobe.ties,'Select tie')}</select></div><div class="selectWrap"><label>Footwear</label><select id="manualFoot">${optionHTML(wardrobe.footwear.filter(f=>f.category==='formalShoes'),'Select footwear')}</select></div>`;
     ['manualSuit','manualUpper','manualTie','manualFoot'].forEach(id=>$('#'+id).onchange=updateManual);
   } else {
     const lowers=wardrobe.lowers.filter(l=>lowerEligible(l,modeKey));
@@ -178,8 +208,8 @@ function renderSaved(){
   $('#clearSavedBtn').onclick=()=>{localStorage.removeItem('wardrobeos_saved'); renderSaved(); toast('Reset saved looks');};
 }
 function renderInventory(){
-  const groups=[['Lowers',wardrobe.lowers],['Uppers',wardrobe.uppers],['Footwear',wardrobe.footwear],['Ties',wardrobe.ties]];
-  $('#inventoryGrid').innerHTML=groups.map(([name,items])=>`<div class="miniCard"><h3>${name} · ${items.length}</h3><div class="inventoryList">${items.map(i=>`<div class="inventoryRow"><span class="dot" style="background:${i.hex}"></span><span>${label(i)}</span></div>`).join('')}</div></div>`).join('');
+  const groups=[['Lowers',wardrobe.lowers],['Uppers',wardrobe.uppers],['Footwear',wardrobe.footwear],['Suits',wardrobe.suits],['Ties',wardrobe.ties]];
+  $('#inventoryGrid').innerHTML=groups.map(([name,items])=>`<div class="miniCard"><h3>${name} · ${items.length}</h3><div class="inventoryList">${items.map(i=>`<div class="inventoryRow"><span class="emojiIcon">${roleEmoji(i.type)}</span><span class="dot" style="background:${i.hex}"></span><span>${label(i)}</span></div>`).join('')}</div></div>`).join('');
 }
 function renderAll(){ renderHero(); renderModeGrid(); renderQuestions(); renderTop(); renderBuilder(); renderSaved(); renderInventory(); }
 renderAll();
