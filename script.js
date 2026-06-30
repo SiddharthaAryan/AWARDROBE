@@ -22,8 +22,31 @@ function roleEmoji(role){
   if(r.includes('tie')) return '👔';
   return '●';
 }
+function roleKind(role){
+  const r = role.toLowerCase();
+  if(r.includes('lower')) return 'lower';
+  if(r.includes('shirt') || r.includes('upper')) return 'shirt';
+  if(r.includes('footwear') || r.includes('shoe')) return 'shoe';
+  if(r.includes('suit')) return 'suit';
+  if(r.includes('tie')) return 'tie';
+  return 'shirt';
+}
+function garmentIcon(item, role){
+  const c = item.hex || '#222';
+  const k = roleKind(role);
+  const common = `fill="${c}" stroke="rgba(0,0,0,.42)" stroke-width="1.4" stroke-linejoin="round"`;
+  const whiteDetail = c.toLowerCase()==='#ffffff' || c.toLowerCase()==='#f8f6f0' || c.toLowerCase()==='#f7f7f2' || c.toLowerCase()==='#f6f6f0' ? '#d8d2c8' : 'rgba(255,255,255,.42)';
+  const svgs = {
+    shirt:`<path ${common} d="M10 9l7-4h6l7 4 6 1-3 8-5-2v20H12V16l-5 2-3-8 6-1z"/><path d="M17 5l3 8 3-8" fill="none" stroke="${whiteDetail}" stroke-width="1.4"/>`,
+    lower:`<path ${common} d="M13 5h14l2 31h-8l-2-19-2 19H9l2-31z"/><path d="M20 6v30" fill="none" stroke="${whiteDetail}" stroke-width="1.2"/>`,
+    shoe:`<path ${common} d="M6 27c7 1 13-2 18-8 5 3 9 5 13 7 1 4-1 7-5 7H9c-3 0-5-2-3-6z"/><path d="M11 29h22" fill="none" stroke="${whiteDetail}" stroke-width="1.3"/>`,
+    suit:`<path ${common} d="M12 5h7l3 7 3-7h7l5 6-4 25H11L7 11l5-6z"/><path d="M19 5l3 31M25 5l-3 31M16 15h4M24 15h4" fill="none" stroke="${whiteDetail}" stroke-width="1.35"/>`,
+    tie:`<path ${common} d="M18 5h8l3 5-5 5 6 17-8 6-8-6 6-17-5-5 3-5z"/><path d="M17 27l10-10" fill="none" stroke="${whiteDetail}" stroke-width="1.4"/>`
+  };
+  return `<span class="garmentIcon" title="${item.color}"><svg viewBox="0 0 44 44" aria-hidden="true">${svgs[k]}</svg></span>`;
+}
 function chip(item, role){
-  return `<div class="itemLine"><span class="emojiIcon">${roleEmoji(role)}</span><span class="dot" title="${item.color}" style="background:${item.hex}"></span><div class="itemText"><b>${role}</b><span>${label(item)}</span></div></div>`;
+  return `<div class="itemLine">${garmentIcon(item,role)}<span class="dot" title="${item.color}" style="background:${item.hex}"></span><div class="itemText"><b>${role}</b><span>${label(item)}</span></div></div>`;
 }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400); }
 function contrastScore(a,b){
@@ -209,7 +232,7 @@ function renderSaved(){
 }
 function renderInventory(){
   const groups=[['Lowers',wardrobe.lowers],['Uppers',wardrobe.uppers],['Footwear',wardrobe.footwear],['Suits',wardrobe.suits],['Ties',wardrobe.ties]];
-  $('#inventoryGrid').innerHTML=groups.map(([name,items])=>`<div class="miniCard"><h3>${name} · ${items.length}</h3><div class="inventoryList">${items.map(i=>`<div class="inventoryRow"><span class="emojiIcon">${roleEmoji(i.type)}</span><span class="dot" style="background:${i.hex}"></span><span>${label(i)}</span></div>`).join('')}</div></div>`).join('');
+  $('#inventoryGrid').innerHTML=groups.map(([name,items])=>`<div class="miniCard"><h3>${name} · ${items.length}</h3><div class="inventoryList">${items.map(i=>`<div class="inventoryRow">${garmentIcon(i,name)}<span class="dot" style="background:${i.hex}"></span><span>${label(i)}</span></div>`).join('')}</div></div>`).join('');
 }
 function renderAll(){ renderHero(); renderModeGrid(); renderQuestions(); renderTop(); renderBuilder(); renderSaved(); renderInventory(); }
 renderAll();
