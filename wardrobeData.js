@@ -72,8 +72,8 @@ const wardrobe = {
     {id:'FW-005', brand:'Bata', color:'Jet Black', type:'Formal Shoes', hex:'#040404', openToe:false, category:'formalShoes', formal:10, smart:7, casual:3, party:7}
   ],
   suits: [
-    {id:'SU-001', brand:'British Cut Suit', color:'Classic Formal', type:'Suit', hex:'#1b1b1f', priority:10},
-    {id:'SU-002', brand:'American Cut Suit', color:'Classic Formal', type:'Suit', hex:'#25262b', priority:7}
+    {id:'SU-001', brand:'British Cut Suit', color:'Navy Blue Double-Breasted', type:'Suit', hex:'#171c38', priority:10},
+    {id:'SU-002', brand:'American Cut Suit', color:'Navy Blue Single-Breasted', type:'Suit', hex:'#202942', priority:7}
   ],
   ties: [
     {id:'TI-001', brand:'Tie', color:'Maroon & Silver Diagonal Stripe', type:'Silk Tie', hex:'#7a1f35'},
